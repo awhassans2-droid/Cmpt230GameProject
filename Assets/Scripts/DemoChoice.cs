@@ -1,14 +1,18 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class DemoChoice : MonoBehaviour
 {
     public TMP_Text resultText;
+    public Image moralityBar;
+
     int morality = 0;
 
     void Start()
     {
-        resultText.text = "Press Q to do good or R to cause some trouble";
+        resultText.text = "Press Q to do good, or R to cause trouble";
+        moralityBar.fillAmount = 0.5f;
     }
 
     void Update()
@@ -17,12 +21,14 @@ public class DemoChoice : MonoBehaviour
         {
             morality += 1;
             resultText.text = "You did good. Morality: " + morality;
+            moralityBar.fillAmount = Mathf.Clamp01(0.5f + morality * 0.1f);
         }
 
         if (Input.GetKeyDown(KeyCode.R))
         {
             morality -= 1;
-            resultText.text = "The owner won't like that. Morality: " + morality;
+            resultText.text = "You caused some trouble. Morality: " + morality;
+            moralityBar.fillAmount = Mathf.Clamp01(0.5f + morality * 0.1f);
         }
     }
 }
