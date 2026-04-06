@@ -5,8 +5,10 @@ public class CatController : MonoBehaviour
     public float walkSpeed = 2.2f;
     public float runSpeed = 4.2f;
     public float turnSpeed = 12f;
-    public float jumpHeight = 2f;
+    public float jumpHeight = 1.1f;
     public float gravity = -20f;
+    
+    public bool didSmack;
 
     public Transform cameraTransform;
 
@@ -15,8 +17,14 @@ public class CatController : MonoBehaviour
     private CharacterController controller;
     private Vector3 velocity;
     
+    public bool isMoving;
+    public bool isRunning;
+    
     public EnergyBar energyBar;
     public float energy = 100f;
+    
+    public StaminaBar staminaBar;
+    public float stamina = 0f;
 
     void Start()
     {
@@ -28,7 +36,7 @@ public class CatController : MonoBehaviour
     {
     	
 	
-    	if (cameraTransform == null) return;
+    	if (controller == null || cameraTransform == null) return;
     	
     	// Ground check
         isGrounded = controller.isGrounded;
@@ -47,22 +55,23 @@ public class CatController : MonoBehaviour
 
         input = input.normalized;
 	
-	// Camera-relative movement
+        // Camera-relative movement
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
-
+        
         camForward.y = 0f;
         camRight.y = 0f;
+        
         camForward.Normalize();
         camRight.Normalize();
 
         Vector3 move = (camForward * input.z + camRight * input.x).normalized;
 
-        bool isMoving = input.magnitude > 0.1f;
-        bool isRunning = Input.GetKey(KeyCode.LeftShift) && isMoving;
+        isMoving = input.magnitude > 0.1f;
+        isRunning = Input.GetKey(KeyCode.LeftShift) && isMoving && energy > 0f;
         
         // Energy bar
-	if (Input.GetKey(KeyCode.LeftShift) && isMoving)
+	if ((Input.GetKey(KeyCode.LeftShift) && isMoving) || (Input.GetKey(KeyCode.Space)))
     	{
     	energy -= 20f * Time.deltaTime;
     	}
@@ -74,6 +83,24 @@ public class CatController : MonoBehaviour
     	if (energyBar != null)
     	{
     	energyBar.SetEnergy(energy);
+    	}
+    	//--------------------------------------------
+    	
+    	// Stamina Bar
+    	if ((isRunning && isMoving) || Input.GetKey(KeyCode.Space))
+    	{
+    		stamina += 10f * Time.deltaTime;
+    	}
+    	else
+    	{
+    		stamina -= 0.5f * Time.deltaTime;
+    	}
+    	
+    	stamina = Mathf.Clamp(stamina, 0f, 100f);
+    	
+    	if (staminaBar != null)
+    	{
+    		staminaBar.SetStamina(stamina);
     	}
     	//--------------------------------------------
 
@@ -101,7 +128,7 @@ public class CatController : MonoBehaviour
 	// Jump
 	if (Input.GetKeyDown(KeyCode.Space) && controller.isGrounded)
 	{
-    		velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+    		velocity.y = Mathf.Sqrt(jumpHeight * -1.1f * gravity);
     		isGrounded = false;
 
     	if (animator != null)
@@ -118,8 +145,11 @@ public class CatController : MonoBehaviour
         {
             if (animator != null)
                 animator.SetTrigger("Smack");
-        }
-
+            didSmack = true;
+            
+            Invoke(nameof(ResetSmack), 0.3f);
+            }
+            
 	// Animator parameters
         if (animator != null)
         {
@@ -128,5 +158,9 @@ public class CatController : MonoBehaviour
             animator.SetBool("IsGrounded", isGrounded);
         }
     }
+    
+    void ResetSmack()
+            {
+            	didSmack = false;
+            }
 }
-
